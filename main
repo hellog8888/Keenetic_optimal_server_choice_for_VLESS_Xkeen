@@ -13,77 +13,60 @@ def find_median(lst):
         return sorted_list[mid_idx]
 
 hosts = [
-		'94.131.101.9',
-		'89.185.82.104',
-		'77.91.70.192',
-		'77.83.246.120',
-		'62.60.251.212',
-		'62.60.238.155',
-		'62.60.234.38',
-		'62.133.60.190',
-		'5.253.40.143',
-		'5.181.3.16',
-		'5.181.21.243',
-		'46.29.238.122',
-		'46.29.235.136',
-		'46.226.163.197',
-		'45.95.232.232',
-		'2.59.162.132',
-		'194.87.31.22',
-		'194.116.172.77',
-		'178.22.31.39',
-		'150.241.89.227',
-		'150.241.101.213',
-		'147.45.60.186',
 		'147.45.126.16',
 		'138.124.92.68',
 		]
 
 total_start = time()
 
+result = {}
+res_no_pass = 0
+
 for ip in hosts:
     print(f"host#{ip}")
     
-    successful_pings = 0
     total_time = 0
     temp_lst_for_med = []
-    count_none = 0
-    count_false = 0
+    count_error = 0
     
-    for attempt in range(1, 101):
-        response = ping(ip, timeout=2, unit='ms')
-        print(response)
+    
+    for attempt in range(1, 501):
+        response = ping(ip, timeout=1, unit='ms')
         
-        if response is not None:
-            successful_pings += 1
-            total_time += response
+        if response is False or response is None:
+            count_error += 1
+            if count_error == 10:
+                break
+        else:
             temp_lst_for_med.append(response)
-        elif response is None:
-            count_none += 1
-            if count_none >= 5:
-                break
-        elif response is False:
-            count_false += 1
-            if count_false == 5:
-                break
     
-    if successful_pings > 0 and (count_none < 5 or count_false < 5):
-        print(f"Успешных пингов: {(successful_pings / 100) * 100:.2f} %")
-        print(f"Медианное время: {find_median(temp_lst_for_med):.2f} мс\n")
-    else:
-        print(f"Все попытки завершились таймаутом\n")
+    if temp_lst_for_med and count_error < 10:
+        delay = find_median(temp_lst_for_med)
+        print(f"Успешных пингов: {(len(temp_lst_for_med) / 500) * 100:.2f} %")
+        print(f"Медианное время: {delay:.2f} мс\n")
         
-    temp_lst_for_med.clear()
-		
+        result[ip] = delay
+    else:
+        res_no_pass += 1
+
+
+for key, value in result.items():
+    print(f"{key}: {value}")
+print("\n")
+print(f"IP не прошедших проверку: {res_no_pass}")
+print("\n")
+
+sorted_dict_desc = dict(sorted(result.items(), key=lambda x: x[1]))
+for key, value in sorted_dict_desc.items():
+    print(f"{key}: {value}")
+print("\n")
+
 total_time = time() - total_start
 print(f"\nОбщее время выполнения: {total_time:.2f} секунд")
 
 
-
+# print(f"No pass\n")
 # Создаем словарь с нумерованными хостами
 # hosts_dict = {idx: ip for idx, ip in enumerate(hosts, start=1)}
-# print(f"Попытка {attempt}: {response:.2f} мс")
-# else:
-    # print(f"Попытка {attempt}: Таймаут")
-#avg_time = total_time / successful_pings
-#print(f"Среднее время: {avg_time:.2f} мс\n")
+# print(f"count_error: {count_error}\n")
+        
