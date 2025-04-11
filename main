@@ -1,47 +1,31 @@
-from ping3 import ping
-import time
 import os
+import time
 import requests
+from ping3 import ping
 
+#local files
+import hosts, func
 
-def get_country_by_ip(ip_address):
-    try:
-        response = requests.get(f"https://ipinfo.io/{ip_address}/json")
-        data = response.json()
-        return data.get("country", "Unknown")  # Возвращаем код страны ("US", "RU")
-    except Exception as e:
-        print(f"Ошибка при запросе: {e}")
-        return "Unknown"
+print("")
+measurement_start_time = time.time()
+print(func.current_date_and_time())
+print("")
 
+#Stage 1
+total_count_ping_req = 10
+result_pass_ping = {}
+result_no_pass_ping = []
 
-def find_median(lst):
-    if not lst:
-        return None
-    sorted_list = sorted(lst)
-    mid_idx = (len(sorted_list) - 1) // 2
-    
-    if len(sorted_list) % 2 == 0:
-        return (sorted_list[mid_idx] + sorted_list[mid_idx + 1]) / 2.0
-    else:
-        return sorted_list[mid_idx]
+print(f"Проверка хостов по ping(-у). Каждый хост проходит проверку на {total_count_ping_req} ICMP запросов")
 
+for ip in hosts.hosts:
+    print(f"IP: {ip}")
 
-hosts = [
-		]
-
-total_start = time.time()
-
-result = {}
-res_no_pass = 0
-
-for ip in hosts:
-    print(f"h#{ip}")
-    
     total_time = 0
     temp_lst_for_med = []
     count_error = 0
-        
-    for attempt in range(1, 11):
+
+    for attempt in range(1, total_count_ping_req + 1):
         response = ping(ip, timeout=1, unit='ms')
         
         if response is False or response is None:
@@ -50,50 +34,57 @@ for ip in hosts:
                 break
         else:
             temp_lst_for_med.append(response)
-    
+
     if temp_lst_for_med and count_error < 3:
-        
-        result[ip] = find_median(temp_lst_for_med)
+        result_pass_ping[ip] = func.find_median(temp_lst_for_med)
     else:
-        res_no_pass += 1
+        result_no_pass_ping.append(ip)
 
 print("")
-print(f"IP не прошедших проверку: {res_no_pass}")
+print(f"Проверка хостов по ping(-у) завершена за: {time.time() - measurement_start_time:.2f} секунд")
+print("")
+print(f"IP не прошедших проверку: {0 if not result_no_pass_ping else [print(x) for x in result_no_pass_ping]}")
+print("")
 
-sorted_dict_desc = dict(sorted(result.items(), key=lambda x: x[1]))
-
-for key, value in sorted_dict_desc.items():
-    print(f"{key}: {value}")
-print("\n")
-
-
+#Stage 2
+sorted_dict_desc = dict(sorted(result_pass_ping.items(), key=lambda x: x[1]))
 ip_list = list(sorted_dict_desc.keys())
 
+count = 0
+for key, value in sorted_dict_desc.items():
+    if count < 3:
+        print(f"{key}: {value}")
+        time.sleep(1)
+        count += 1
+    else:
+        break
+
+
+#Stage 3
+print("")
 ip_country_dict = {}
 
-for ip in ip_list:
-    country = get_country_by_ip(ip)
+for ip in ip_list[:4]:
+    country = func.get_country_by_ip(ip)
     ip_country_dict[ip] = country
     print(f"IP: {ip} -> Страна: {country}")
-    time.sleep(1)
+    time.sleep(1)  # Пауза 1 секунда, чтобы не превысить лимит запросов API
 
-#print("\nСловарь IP-адресов и стран:")
-#for key, value in ip_country_dict.items():
-#    print(f"{key}: {value}")
-#print("\n")
 
-print(f"{ip_list[0} : {ip_country_dict[ip_list[0]]}")
-os.system(f"mtr -r -c 20 {list(sorted_dict_desc.keys())[0]}")
-time.sleep(22)
-print("\n")
+#Stage 4
+print("")
+print(f"{ip_list[0]} : {ip_country_dict[ip_list[0]]}")
+os.system(f"mtr -r -c 50 {list(sorted_dict_desc.keys())[0]}")
+time.sleep(50)
 
-print(f"{ip_list[1} : {ip_country_dict[ip_list[1]]}")
-os.system(f"mtr -w -c 20 {list(sorted_dict_desc.keys())[1]}")
-time.sleep(22)
-print("\n")
+print("")
+print(f"{ip_list[1]} : {ip_country_dict[ip_list[1]]}")
+os.system(f"mtr -w -c 50 {list(sorted_dict_desc.keys())[1]}")
+time.sleep(50)
 
-print(f"{ip_list[2} : {ip_country_dict[ip_list[2]]}")
-os.system(f"mtr -w -c 20 {list(sorted_dict_desc.keys())[2]}")
+print("")
+print(f"{ip_list[2]} : {ip_country_dict[ip_list[2]]}")
+os.system(f"mtr -w -c 50 {list(sorted_dict_desc.keys())[2]}")
 
-total_time = time.time() - total_start
-print(f"\nОбщее время выполнения: {total_time:.2f} секунд")
+
+print(f"\nОбщее время выполнения: {time.time() - measurement_start_time:.2f} секунд")
