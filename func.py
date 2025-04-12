@@ -18,3 +18,6 @@ def find_median(lst):
         return sorted_list[mid_idx]
 
 
+def get_lst_from_file(file_txt):
+    with open(file_txt, 'r') as file_txt_r:
+        return [line.rstrip('\n') for line in file_txt_r]
