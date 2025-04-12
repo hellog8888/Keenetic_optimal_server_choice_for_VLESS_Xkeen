@@ -1,29 +1,54 @@
 import os
 import time
-import requests
 from ping3 import ping
 
 #local files
-import hosts, func
+import hosts, func, func_with_location
 
 print("")
 measurement_start_time = time.time()
-print(func.current_date_and_time())
-print("")
+print(f"Start: {func.current_date_and_time()}")
 
-#Stage 1
+#Здесь задается параметр колличество ICMP запросов
 total_count_ping_req = 10
+
 result_pass_ping = {}
 result_no_pass_ping = []
 
-print(f"Проверка хостов по ping(-у). Каждый хост проходит проверку на {total_count_ping_req} ICMP запросов")
+ip_country_dict = {}
+
+print("-----------------------------------------------------")
+print(f"1.  Словарь с IP")
+print(f"1.1 ")
+
+print("")
+
+#Создаем словарь с IP адреса если их нет во внешнем локальном файла
+for ip in hosts.hosts:
+    country = func_with_location.get_country_by_ip(ip)
+    ip_country_dict[ip] = country
+    print(f"IP: {ip} : {country}")
+    time.sleep(2)  # Пауза 1 секунда, чтобы не превысить лимит запросов API
+
+print(f"1.2 Все ip присутствуют в локальном файле")
+print("-----------------------------------------------------")
+
+def base_station_get_from_export_romes(file_txt):
+    with open(file_txt, 'r') as file_txt_r:
+        return list(set([line[line.strip().find(':') + 1: line.strip().find('/')] for line in file_txt_r if
+                         line.startswith('eNodeB') and line.strip().split(';')[13] != 11]))
+
+
+print("-----------------------------------------------------")
+print(f"2.  Проверка хостов по ICMP запросу.")
+print(f"2.2 Каждый хост проходит проверку доступности на {total_count_ping_req} запросов")
 
 for ip in hosts.hosts:
     print(f"IP: {ip}")
 
     total_time = 0
-    temp_lst_for_med = []
     count_error = 0
+    temp_lst_for_med = []
 
     for attempt in range(1, total_count_ping_req + 1):
         response = ping(ip, timeout=1, unit='ms')
@@ -40,11 +65,12 @@ for ip in hosts.hosts:
     else:
         result_no_pass_ping.append(ip)
 
-print("")
 print(f"Проверка хостов по ping(-у) завершена за: {time.time() - measurement_start_time:.2f} секунд")
 print("")
 print(f"IP не прошедших проверку: {0 if not result_no_pass_ping else [print(x) for x in result_no_pass_ping]}")
-print("")
+print("-----------------------------------------------------")
+
+
 
 #Stage 2
 sorted_dict_desc = dict(sorted(result_pass_ping.items(), key=lambda x: x[1]))
@@ -58,17 +84,6 @@ for key, value in sorted_dict_desc.items():
         count += 1
     else:
         break
-
-
-#Stage 3
-print("")
-ip_country_dict = {}
-
-for ip in ip_list[:4]:
-    country = func.get_country_by_ip(ip)
-    ip_country_dict[ip] = country
-    print(f"IP: {ip} -> Страна: {country}")
-    time.sleep(1)  # Пауза 1 секунда, чтобы не превысить лимит запросов API
 
 
 #Stage 4
