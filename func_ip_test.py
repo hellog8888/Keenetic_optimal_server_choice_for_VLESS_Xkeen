@@ -7,9 +7,10 @@ def ping_cheking(hosts, count_ping_req):
 
     result_pass_ping = {}
     result_pass_ping_no = []
+    count_lst_ip = len(hosts)
 
-    for ip in hosts:
-        print(f"IP: {ip}")
+    for i, ip in enumerate(hosts, start=1):
+        print(f"IP: {ip} [{i} из {count_lst_ip}]")
 
         count_error = 0
         temp_lst_for_med = []
