@@ -1,6 +1,8 @@
 from ping3 import ping
-#from func import find_median
 import func
+import os
+import nmap
+impoer scapy
 
 
 def ping_cheking(hosts, count_ping_req):
@@ -10,7 +12,7 @@ def ping_cheking(hosts, count_ping_req):
     count_lst_ip = len(hosts)
 
     for i, ip in enumerate(hosts, start=1):
-        print(f"IP: {ip} [{i} из {count_lst_ip}]")
+        print(f"IP: {ip} [{i} from {count_lst_ip}]")
 
         count_error = 0
         temp_lst_for_med = []
@@ -34,19 +36,3 @@ def ping_cheking(hosts, count_ping_req):
         result_pass_ping = dict(sorted(result_pass_ping.items(), key=lambda x: x[1]))
 
     return result_pass_ping, result_pass_ping_no
-
-
-def test():
-    print("")
-    print(f"{ip_list[0]} : {ip_country_dict[ip_list[0]]}")
-    os.system(f"mtr -r -c 50 {list(sorted_dict_desc.keys())[0]}")
-    time.sleep(50)
-
-    print("")
-    print(f"{ip_list[1]} : {ip_country_dict[ip_list[1]]}")
-    os.system(f"mtr -w -c 50 {list(sorted_dict_desc.keys())[1]}")
-    time.sleep(50)
-
-    print("")
-    print(f"{ip_list[2]} : {ip_country_dict[ip_list[2]]}")
-    os.system(f"mtr -w -c 50 {list(sorted_dict_desc.keys())[2]}")
